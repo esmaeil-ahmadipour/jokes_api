@@ -5,6 +5,70 @@ const app = express();
 const PORT = 3000;
 app.use(cors())
 app.use(express.json());
+/**
+ * =====================================================
+ * 🗑️ DELETE JOKE BY ID
+ * =====================================================
+ *
+ * DELETE /api/jokes/:id
+ *
+ * Success Response (200):
+ *
+ * {
+ *   "statusCode": 200,
+ *   "message": "Joke deleted successfully",
+ *   "deletedJoke": {
+ *     "id": 1,
+ *     "type": "single",
+ *     "joke": "Why do programmers prefer dark mode? Because light attracts bugs!",
+ *     "setup": "",
+ *     "delivery": ""
+ *   }
+ * }
+ *
+ * Error Response (404):
+ *
+ * {
+ *   "statusCode": 404,
+ *   "error": "Joke not found"
+ * }
+ */
+app.delete('/api/jokes/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const jokeIndex = extendedJokes.findIndex(j => j.id === id);
+
+  if (jokeIndex === -1) {
+    return res.status(404).json({
+      statusCode: 404,
+      error: 'Joke not found'
+    });
+  }
+
+  // Store the joke before removing it
+  const deletedJoke = extendedJokes[jokeIndex];
+  
+  // Remove from both arrays
+  extendedJokes.splice(jokeIndex, 1);
+  
+  // Also remove from the main jokes array if it's one of the original jokes
+  const mainJokeIndex = jokes.findIndex(j => j.id === id);
+  if (mainJokeIndex !== -1) {
+    jokes.splice(mainJokeIndex, 1);
+  }
+
+  // Return success response
+  res.status(200).json({
+    statusCode: 200,
+    message: 'Joke deleted successfully',
+    deletedJoke: {
+      id: deletedJoke.id,
+      type: deletedJoke.type,
+      setup: deletedJoke.setup || '',
+      delivery: deletedJoke.delivery || '',
+      joke: deletedJoke.joke || ''
+    }
+  });
+});
 
 /**
  * =====================================================
