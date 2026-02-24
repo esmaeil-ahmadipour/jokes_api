@@ -301,6 +301,107 @@ app.get('/api/jokesPaginated', (req, res) => {
 
 /**
  * =====================================================
+ * ➕ ADD NEW JOKE
+ * =====================================================
+ *
+ * POST /api/jokes
+ *
+ * Request Body:
+ *
+ * {
+ *   "type": "single", // or "twopart"
+ *   "joke": "Your single joke here", // required for type="single"
+ *   "setup": "", // required for type="twopart"
+ *   "delivery": "" // required for type="twopart"
+ * }
+ *
+ * Success Response (201):
+ *
+ * {
+ *   "statusCode": 201,
+ *   "message": "Joke added successfully",
+ *   "joke": {
+ *     "id": 101,
+ *     "type": "single",
+ *     "joke": "Your single joke here",
+ *     "setup": "",
+ *     "delivery": ""
+ *   }
+ * }
+ *
+ * Error Response (400):
+ *
+ * {
+ *   "statusCode": 400,
+ *   "error": "Validation failed",
+ *   "details": {
+ *     "joke": "Joke is required for single type"
+ *   }
+ * }
+ */
+app.post('/api/jokes', (req, res) => {
+  const { type, joke, setup, delivery } = req.body;
+  
+  // Validation
+  const errors = {};
+  
+  if (!type || (type !== 'single' && type !== 'twopart')) {
+    errors.type = 'Type must be either "single" or "twopart"';
+  }
+  
+  if (type === 'single') {
+    if (!joke || joke.trim() === '') {
+      errors.joke = 'Joke is required for single type';
+    }
+  } else if (type === 'twopart') {
+    if (!setup || setup.trim() === '') {
+      errors.setup = 'Setup is required for two-part joke';
+    }
+    if (!delivery || delivery.trim() === '') {
+      errors.delivery = 'Delivery is required for two-part joke';
+    }
+  }
+  
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({
+      statusCode: 400,
+      error: 'Validation failed',
+      details: errors
+    });
+  }
+  
+  // Create new joke
+  const newId = extendedJokes.length + 1;
+  
+  const newJoke = {
+    id: newId,
+    type,
+    joke: type === 'single' ? joke : '',
+    setup: type === 'twopart' ? setup : '',
+    delivery: type === 'twopart' ? delivery : '',
+  };
+  
+  // Add to both arrays
+  extendedJokes.push(newJoke);
+  
+  // Also add to main jokes array if it's a new original joke
+  jokes.push({
+    id: newId,
+    type,
+    joke: type === 'single' ? joke : '',
+    setup: type === 'twopart' ? setup : '',
+    delivery: type === 'twopart' ? delivery : '',
+  });
+  
+  res.status(201).json({
+    statusCode: 201,
+    message: 'Joke added successfully',
+    joke: newJoke
+  });
+});
+
+/**
+ * =====================================================
  * 🚀 START SERVER
  * =====================================================
  */
